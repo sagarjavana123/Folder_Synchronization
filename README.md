@@ -1,7 +1,7 @@
 
 # Folder Synchronization Tool
 
-This Python script is a simple folder synchronization tool that helps you keep two folders synchronized in a one-way manner. It monitors the source folder for changes and updates the destination (replica) folder accordingly. The synchronization process compares files based on their content using MD5 checksums and updates only the modified or new files. It also deletes files and folders from the destination that are no longer present in the source.
+This Python script is a folder synchronization tool that helps to keep two folders synchronized in a one-way manner. It monitors the source folder for changes and updates the destination (replica) folder accordingly. The synchronization process compares files based on their content using MD5 checksums and updates only the modified or new files. It also deletes files and folders from the destination that are no longer present in the source.
 
 
 ## Features
@@ -19,15 +19,15 @@ This Python script is a simple folder synchronization tool that helps you keep t
 
 1. Make sure you have Python 3.x installed on your system.
 
-2. Save the provided Python script as folder_sync.py.
+2. Save the provided Python script as Folder_Synch.py.
 
 3. Open a terminal or command prompt.
 
-4. Navigate to the directory containing the folder_sync.py script.
+4. Navigate to the directory containing the Folder_synch.py script.
 
 5. Run the script using the following command:
 
-        python folder_sync.py source_folder_path replica_folder_path interval log_file_path
+        python Folder_synch.py source_folder_path replica_folder_path interval log_file_path
 
 
 
