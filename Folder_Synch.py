@@ -39,6 +39,7 @@ class FolderSync:
         self.replica_folder = replica_folder
         self.interval = interval
         self.log_file = log_file
+        self.copy_status = False # To identify newly created files
 
         # Set up logging
         logging.basicConfig(filename=log_file, level=logging.INFO, format='%(asctime)s - %(message)s',
@@ -56,7 +57,6 @@ class FolderSync:
             exit(1)
 
         if not os.path.exists(self.replica_folder):
-            print("\n***** Argument Error *****\nDestination folder does not exist!")
             logging.error("\n***** Argument Error *****\nDestination folder does not exist!")
             exit(1)
 
@@ -75,46 +75,58 @@ class FolderSync:
         This method synchronize two folders in one-way.
         :return: None
         """
-        try:
-            # If we use this part of code then we can avoid deletion code part
-            # Remove existing files and folders from destination
-            # shutil.rmtree(replica_folder)
-            # os.makedirs(replica_folder)
+        # If we use this part of code then we can avoid deletion code part
+        # Remove existing files and folders from destination
+        # shutil.rmtree(replica_folder)
+        # os.makedirs(replica_folder)
 
-            # Copy all the files to destination folder
-            for root, _, files in os.walk(self.source_folder):
-                for file in files:
-                    source_file_path = os.path.join(root, file)
-                    replica_file_path = source_file_path.replace(self.source_folder, self.replica_folder, 1)
+        # Copy all the files to destination folder
+        for root, _, files in os.walk(self.source_folder):
+            for file in files:
+                source_file_path = os.path.join(root, file)
+                replica_file_path = source_file_path.replace(self.source_folder, self.replica_folder, 1)
 
-                    if not os.path.exists(replica_file_path) or\
-                            calculate_md5(source_file_path) != calculate_md5(replica_file_path):
+                if not os.path.exists(replica_file_path) or\
+                        calculate_md5(source_file_path) != calculate_md5(replica_file_path):
+                    try:
                         os.makedirs(os.path.dirname(replica_file_path), exist_ok=True)
                         shutil.copy2(source_file_path, replica_file_path)
-                        logging.info(f"File copied: {source_file_path} --> {replica_file_path}")
+                        if self.copy_status:
+                            logging.info(f"Copied new/modified file: {source_file_path} --> {replica_file_path}")
+                        else:
+                            logging.info(f"File copied: {source_file_path} --> {replica_file_path}")
+                    except Exception as copy_error:
+                        logging.info(f"Error occurred while copying the file : {source_file_path}.\n "
+                                     f"Details :\n{copy_error}")
 
-            # Delete the files and folders which are not present in source folder
-            for root, dirs, files in os.walk(self.replica_folder):
-                for file in files:
-                    replica_file_path = os.path.join(root, file)
-                    source_file_path = os.path.join(self.source_folder,
-                                                    os.path.relpath(replica_file_path, self.replica_folder))
+        self.copy_status = True
 
-                    if not os.path.exists(source_file_path):
+        # Delete the files and folders which are not present in source folder
+        for root, dirs, files in os.walk(self.replica_folder):
+            for file in files:
+                replica_file_path = os.path.join(root, file)
+                source_file_path = os.path.join(self.source_folder,
+                                                os.path.relpath(replica_file_path, self.replica_folder))
+                if not os.path.exists(source_file_path):
+                    try:
                         os.remove(replica_file_path)
                         logging.info(f"File Removed: {replica_file_path}")
-                for dir_ in dirs:
-                    replica_folder_path = os.path.join(root, dir_)
-                    source_file_path = os.path.join(self.source_folder,
-                                                    os.path.relpath(replica_folder_path, self.replica_folder))
-
-                    if not os.path.exists(source_file_path):
+                    except Exception as file_remove_error:
+                        logging.info(f"Error occurred while removing the file : {replica_file_path}.\n"
+                                     f" Details :\n{file_remove_error}")
+            for dir_ in dirs:
+                replica_folder_path = os.path.join(root, dir_)
+                source_file_path = os.path.join(self.source_folder,
+                                                os.path.relpath(replica_folder_path, self.replica_folder))
+                if not os.path.exists(source_file_path):
+                    try:
                         shutil.rmtree(replica_folder_path)
                         logging.info(f"Folder Removed: {replica_folder_path}")
+                    except Exception as folder_remove_error:
+                        logging.info(f"Error occurred while removing the folder : {replica_folder_path}.\n"
+                                     f" Details :\n{folder_remove_error}")
 
-            logging.info(f"Synchronization completed at: {time.ctime()}")
-        except Exception as synch_error:
-            logging.info(f"Error occurred during synchronization: {synch_error}")
+        logging.info(f"Synchronization completed at: {time.ctime()}")
 
     def run(self):
         """
